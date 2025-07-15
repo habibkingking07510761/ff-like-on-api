@@ -1,0 +1,28 @@
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import json
+
+app = FastAPI()
+
+# Load tokens from habib.json
+with open("habib.json", "r") as f:
+    tokens = json.load(f)["tokens"]
+
+class LikeRequest(BaseModel):
+    user_id: int
+    action: str
+
+@app.post("/like")
+async def like_post(data: LikeRequest):
+    if data.action != "like":
+        raise HTTPException(status_code=400, detail="Invalid action")
+
+    # Rotate through tokens based on user ID
+    token = tokens[data.user_id % len(tokens)]
+
+    return {
+        "status": "success",
+        "user_id": data.user_id,
+        "used_token": token[:10] + "...",
+        "message": f"User {data.user_id} liked successfully."
+    }
